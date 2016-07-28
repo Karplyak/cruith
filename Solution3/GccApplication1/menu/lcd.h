@@ -1,6 +1,6 @@
 #ifndef _LCH_H_
 #define _LCD_H_ 1
-
+void lcd_clrscr(unsigned char);
 //#include "i2c_lcd.h"
 /*
 void lcd_write(unsigned char codeA)

@@ -6,9 +6,14 @@
  */ 
 
 #define F_CPU 16000000UL
+
+#define s_begin (PINB & (1<<PINB5))
+#define s_end (PINC & (1<<PINC3))
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdio.h>
+//#include <math.h>
 #include <util/delay.h>
 
 #include "i2cmaster.h"
@@ -120,29 +125,29 @@ void stepm(int kr)
 {	//unsigned char step[] = {0b00000001, 0b00000010, 0b00000100};
 		if (kr==0) //зменшення газу до 0
 		{
-			do 
+			while (s_begin !=0);///////////////////////////////////////////////////////////////////////
 			{
 				switch(stm)
 				{
 					case 0:
 					//PORTC = step[0];
 					PORTC = (0<<PORTC2)|(0<<PORTC1)|(1<<PORTC0);
-					stm++;
+					stm++;_delay_us(100);
 					break;
 					
 					case 1:
 					//PORTC = step[1];
 					PORTC = (0<<PORTC2)|(1<<PORTC1)|(0<<PORTC0);
-					stm++;
+					stm++;_delay_us(100);
 					break;
 					
 					case 2:
 					//PORTC = step[2];
 					PORTC = (1<<PORTC2)|(0<<PORTC1)|(0<<PORTC0);
-					stm=0;
+					stm=0;_delay_us(100);
 					break;
 				}
-			} while ((PINB & (1<<PINB5)) !=0);///////////////////////////////////////////////////////////////////////
+			} 
 		} 
 		else
 	{
@@ -150,26 +155,26 @@ void stepm(int kr)
 		{			
 			for (int i=0; i < kr; i++)
 			{ 
-				if ((PINB & (1<<PINB5)) !=0)/////////////////////////////////////////////////////////////////
+				if (s_end !=0)/////////////////////////////////////////////////////////////////
 			 {
 					switch(stm)
 				{
 					case 0:
 					//PORTC = step[0];
 					PORTC = (0<<PORTC2)|(0<<PORTC1)|(1<<PORTC0);
-					stm++;
+					stm++;	_delay_us(100);
 					break;
 			
 					case 1:
 					//PORTC = step[1];
 					PORTC = (0<<PORTC2)|(1<<PORTC1)|(0<<PORTC0);
-					stm++;
+					stm++;_delay_us(100);
 					break;
 			
 					case 2:
 					//PORTC = step[2];
 					PORTC = (1<<PORTC2)|(0<<PORTC1)|(0<<PORTC0);
-					stm=0;
+					stm=0;_delay_us(100);
 					break;
 				}		
 			 }
@@ -177,28 +182,28 @@ void stepm(int kr)
 
 		} else //тормозити
 			{
-		for (int i=0; i < kr; i++)
+		for (int i=0; i < abs(kr); i++)
 		{	
-			if ((PINB & (1<<PINB5)) !=0) //////////////////////////////////////////////////
+			if (s_begin !=0) //////////////////////////////////////////////////
 		{
 			switch(stm)
 			{
 				case 2:
 				//PORTC = step[0];
 				PORTC = (0<<PORTC2)|(0<<PORTC1)|(1<<PORTC0);
-				stm++;
+				stm=0;_delay_us(100);
 				break;
 				
 				case 1:
 				//PORTC = step[1];
 				PORTC = (0<<PORTC2)|(1<<PORTC1)|(0<<PORTC0);
-				stm++;
+				stm++;_delay_us(100);
 				break;
 				
 				case 0:
 				//PORTC = step[2];
 				PORTC = (1<<PORTC2)|(0<<PORTC1)|(0<<PORTC0);
-				stm=0;
+				stm++;_delay_us(100);
 				break;
 			}
 		}
@@ -299,7 +304,7 @@ ISR (TIMER1_COMPA_vect) //переход на следующий режим при ажатии кнопки
   if ((r1>=-3) &&(r1<-10))  {stepm(50);}
   if ((r1>=-10)&&(r1<-30))  {stepm(100);}
   if ((r1>=-30)&&(r1<-45))  {stepm(250);}
-  if ((r1>=45))  {stepm(0);}
+  if ((r1>=-45))  {stepm(0);}
 	sei();//разрешение прерываний
 }
 
@@ -359,9 +364,10 @@ int main(void)
 	 MCUCR |=(1<<ISC01)|(1<<ISC00); //регистр настройки прерываний на выводах INT0 и INT1
 	 
 	 
-	 TCCR1B = (0<<CS12)|(1<<CS11)|(0<<CS10);
-	 //TCNT1 = 0xFD8F;
-	 OCR1A =0x4E20;
+	 TCCR1B = (0<<CS12)|(1<<CS11)|(1<<CS10);
+	 //TCNT1 = 0xFB1E;
+	 //OCR1A =0x4E20;
+	 OCR1A = 0xfb1e;
 	 TIMSK1=(1<<OCIE1A);
 	 sei();
 	 
